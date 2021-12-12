@@ -5,34 +5,32 @@ import openpyxl
 import time
 import serial
 
-def inRoster(uuidSum):
+def inRoster(uuid = []):
     for i in range(numStudents):
-        if uuidSum == keys[i]:
+        if (uuid[0] == keys[i][0] and uuid[1] == keys[i][1] and uuid[2] == keys[i][2] and uuid[3] == keys[i][3]):
             return i
-    
     return -1
 
 #File Path to Attendance Sheet
 path = "//Users//BLGlilB//Documents//EE193//Final Project//Attendance.xlsx"
 
 # Setting up workbook for roster sheet
-names = []
-keys = []
 wb = openpyxl.load_workbook(path)
 wb.active = 0
 roster = wb.active
 numStudents = roster.max_row
+names = []
+keys = [[0 for i in range(4)] for j in range(numStudents)]
+
 
 for i in range(1,numStudents+1):
     names.append(roster.cell(row = i, column = 1).value) #Adding Names to List
-    keysum = 0
     for j in range(2,6):
         currcell= roster.cell(row = i, column = j).value
         cellInt = int(currcell,16) #Convert String to int
-        #hexID = hex(cellInt)
-        keysum += cellInt
+        keys[i-1][j-2] = cellInt #Adding Int version of ID to Array
 
-    keys.append(keysum) #Adding Keys to List
+    #keys.append(keysum) #Adding Keys to List
 
 # Setting up workbook for attendance sheet
 wb.active = 1
@@ -63,15 +61,15 @@ if command == 'y':
 try:
     while running:
         # Reading data from port
-        uuidSum = 0
+        tempUID = [0, 0, 0, 0]
         for i in range(4):
             b = ser.readline() #Read In String
             string_n = b.decode() #Decode Binary
             string = string_n.rstrip() #Removes \r and \n
             intID = int(string) #Convert String from Serial to Int
-            uuidSum += intID #Creates a Single Sum for ID Key
+            tempUID[i] = intID #Adds ID byte to Array
 
-        student = inRoster(uuidSum) #Checks if student in roster and what student num
+        student = inRoster(tempUID) #Checks if student in roster and what student num
         if (student != -1):
             print('Welcome ' + names[student] + '!')
             dateInfo = time.localtime(time.time())
@@ -85,5 +83,5 @@ try:
 
         wb.save("Attendance.xlsx")
 except:
-    print('\nThank You! Come Againg Soon :)')
+    print('\nThank You! Come Again Soon :)')
     wb.save("Attendance.xlsx")
